@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>삼성자라다 직원 매뉴얼</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky bar with role tabs; overview board on top of the "전체" tab; one card-less reading column per part.
+   Each role keeps its own hue, and each part carries a status (초안 → 작성 중 → 검토 요청 → 완료) so the director sees progress at a glance. */
+:root{
+  --bg:#F3F7F7; --surface:#FFFFFF; --fg:#14262B; --muted:#587076; --line:#D3DFE1;
+  --accent:#0B6B6E; --accent-ink:#FFFFFF; --accent-soft:#E0F0F0;
+  --warn-bg:#FFEFC2; --warn-fg:#6B4A00; --danger:#B3261E; --ok:#1F7A45; --ok-bg:#DDF1E4;
+  --c-common:#0B6B6E; --c-admin:#2D5FA8; --c-nurse:#B0405F; --c-lab:#6A4DA8;
+  --font:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1A1D; --surface:#16262A; --fg:#E6EFF0; --muted:#8FA9AE; --line:#2A3F44;
+    --accent:#4FC3C3; --accent-ink:#06282A; --accent-soft:#17383B;
+    --warn-bg:#3D3210; --warn-fg:#F3D98B; --danger:#F2A09A; --ok:#7FD39B; --ok-bg:#16382A;
+    --c-common:#4FC3C3; --c-admin:#7FA9E6; --c-nurse:#EE8CA6; --c-lab:#B8A1EE;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1A1D; --surface:#16262A; --fg:#E6EFF0; --muted:#8FA9AE; --line:#2A3F44;
+  --accent:#4FC3C3; --accent-ink:#06282A; --accent-soft:#17383B;
+  --warn-bg:#3D3210; --warn-fg:#F3D98B; --danger:#F2A09A; --ok:#7FD39B; --ok-bg:#16382A;
+  --c-common:#4FC3C3; --c-admin:#7FA9E6; --c-nurse:#EE8CA6; --c-lab:#B8A1EE;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.7;word-break:keep-all;overflow-wrap:anywhere}
+button,select{font-family:inherit}
+[data-role=common]{--r:var(--c-common)} [data-role=admin]{--r:var(--c-admin)} [data-role=nurse]{--r:var(--c-nurse)} [data-role=lab]{--r:var(--c-lab)} [data-role=all]{--r:var(--accent)}
+
+/* top bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1000px;margin:0 auto;padding:10px 16px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{min-width:0;display:flex;flex-direction:column;line-height:1.35}
+.brand strong{font-size:17px;font-weight:700}
+.brand span{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.dot.on{background:var(--ok)}
+.prog{display:flex;flex-direction:column;gap:4px;min-width:200px;font-size:12px;color:var(--muted);align-items:flex-end}
+.pbar{display:flex;width:200px;height:8px;border-radius:999px;overflow:hidden;background:var(--line)}
+.pbar i{display:block;height:100%}
+.tabs{max-width:1000px;margin:0 auto;padding:6px 16px 0;display:flex;gap:4px;overflow-x:auto}
+.tab{flex:none;border:0;background:transparent;color:var(--muted);font-size:14px;padding:8px 14px;cursor:pointer;border-bottom:3px solid transparent;border-radius:8px 8px 0 0;white-space:nowrap}
+.tab:hover{background:var(--accent-soft);color:var(--fg)}
+.tab[aria-selected=true]{color:var(--fg);font-weight:600;border-bottom-color:var(--r,var(--accent))}
+.tab .cnt{font-size:11px;margin-left:6px;padding:0 6px;border-radius:999px;background:var(--line);color:var(--muted)}
+.tab .cnt.hot{background:var(--warn-bg);color:var(--warn-fg);font-weight:600}
+.btn{font-size:13px;line-height:1.2;padding:7px 12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn:focus-visible,.ed:focus-visible,.tab:focus-visible,select:focus-visible,tr[data-go]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn.danger{color:var(--danger)}
+.btn.armed{background:var(--danger);color:var(--surface);border-color:var(--danger)}
+.btn[disabled]{opacity:.55;cursor:default}
+.banner{max-width:1000px;margin:0 auto;padding:8px 16px;font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--warn-bg);color:var(--warn-fg)}
+
+.wrap{max-width:1000px;margin:0 auto;padding-inline:16px;padding-block:20px 96px}
+.empty{padding:28px 16px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);text-align:center;background:var(--surface)}
+.empty b{display:block;color:var(--fg);font-size:16px;margin-bottom:4px}
+
+/* overview board */
+.ov h2{font-size:15px;margin:0 0 8px;font-weight:600}
+.ov .tw{margin:0 0 8px}
+tr[data-go]{cursor:pointer}
+tr[data-go]:hover td{background:var(--accent-soft)}
+.pill{display:inline-block;font-size:12px;font-weight:600;line-height:1.7;padding:0 9px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.pill.draft{color:var(--muted)}
+.pill.writing{color:var(--c-admin)}
+.pill.review{color:var(--warn-fg);background:var(--warn-bg);border-color:transparent}
+.pill.done{color:var(--ok);background:var(--ok-bg);border-color:transparent}
+.rchip{font-size:12px;font-weight:600;color:var(--r);border:1px solid var(--r);border-radius:999px;padding:0 9px;line-height:1.7;white-space:nowrap}
+.sub{font-size:12px;color:var(--muted)}
+
+/* sections */
+.sec{border-top:3px solid var(--r);padding-block:16px 28px;margin-top:20px;scroll-margin-top:120px}
+.sec-h{display:flex;align-items:flex-start;justify-content:space-between;gap:10px 16px;flex-wrap:wrap}
+.sec h2{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0;font-size:23px;line-height:1.35;font-weight:700;text-wrap:balance;min-width:0}
+.sec h2 .no{font-size:15px;font-weight:600;color:var(--r);font-variant-numeric:tabular-nums}
+.sec-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 4px;font-size:12px;color:var(--muted)}
+.sec-acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+select.st{font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.dchip{font-size:12px;font-weight:600;color:var(--warn-fg);background:var(--warn-bg);padding:0 8px;border-radius:999px}
+.cf{margin:10px 0;padding:10px 12px;border-radius:8px;background:var(--warn-bg);color:var(--warn-fg);font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+h3{font-size:17px;font-weight:600;margin:28px 0 8px;line-height:1.4}
+h4{font-size:14px;font-weight:600;margin:20px 0 6px;color:var(--r)}
+p{margin:8px 0;max-width:68ch}
+ul,ol{margin:8px 0;padding-left:1.35em;max-width:72ch}
+li{margin:4px 0;position:relative}
+ul.check{list-style:none;padding-left:0}
+ul.check li{padding-left:28px}
+ul.check li::before{content:"";position:absolute;left:4px;top:.5em;width:14px;height:14px;border:1.5px solid var(--muted);border-radius:3px}
+b{font-weight:700}
+mark{background:var(--warn-bg);color:var(--warn-fg);padding:0 4px;border-radius:4px;font-weight:600}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface);margin:8px 0}
+table{border-collapse:collapse;width:100%;min-width:calc(var(--cols,2) * 128px);font-size:14px}
+th{text-align:left;font-weight:600;font-size:13px;background:var(--accent-soft);padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 12px;vertical-align:top;border-top:1px solid var(--line);line-height:1.55}
+tbody tr:first-child td{border-top:0}
+table.form td:first-child{width:36%;font-weight:500;background:color-mix(in srgb,var(--accent-soft) 45%,var(--surface))}
+th.rm,td.rm{width:44px;white-space:nowrap;text-align:center;padding-inline:4px}
+.ph{color:var(--muted);font-size:12px;opacity:.75}
+
+/* editing */
+.ed{display:block;min-width:1.5em;border-radius:4px;padding:0 3px;margin-inline:-3px;outline:1px dashed var(--line);white-space:pre-wrap}
+.ed:hover{outline-color:var(--muted)}
+.ed:focus{outline:2px solid var(--accent);background:var(--accent-soft)}
+.ed:empty::before{content:"입력";color:var(--muted);opacity:.7}
+.blk{position:relative}
+.bt{display:none;position:absolute;right:0;top:-24px;gap:4px;z-index:5}
+.bt .btn{padding:3px 8px;font-size:12px}
+.isEd .blk:hover>.bt,.isEd .blk:focus-within>.bt{display:flex}
+@media (hover:none){.isEd .bt{display:flex;position:static;justify-content:flex-end;margin:6px 0 2px}}
+.btn.x{padding:0 7px;line-height:1.5;border-color:transparent;background:transparent;color:var(--muted)}
+.btn.x:hover{color:var(--danger);border-color:var(--danger)}
+.isEd li{padding-right:30px}
+li .btn.x{position:absolute;right:-6px;top:0}
+.btn.add{margin:6px 0;border-style:dashed;color:var(--accent);background:transparent}
+.btn.add.strong{border-style:solid;font-weight:600}
+.thc{display:flex;align-items:center;gap:2px}
+.thc .ed{flex:1}
+.ttools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:2px 0 14px}
+.ttools .btn.add{margin:0}
+.addbar{display:flex;gap:6px;flex-wrap:wrap;margin-top:18px;padding-top:12px;border-top:1px dashed var(--line);align-items:center;font-size:12px;color:var(--muted)}
+.rsel{font-size:13px;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+
+.setp{margin:10px 0;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);display:grid;gap:10px}
+.setp label{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.inp{font:inherit;font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);min-width:0;flex:1 1 220px}
+.inp:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.own{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.own .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.res{display:flex;gap:6px;flex-wrap:wrap}
+.who{font-size:12px;color:var(--muted)}
+.who b{color:var(--fg)}
+.idbox{max-width:1000px;margin:0 auto;padding:8px 16px;font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--accent-soft)}
+.idbox input{font:inherit;font-size:13px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);min-width:0;flex:1 1 260px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:13px;z-index:50;max-width:calc(100% - 32px);opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+
+/* login & admin additions */
+[hidden]{display:none !important}
+.center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px 24px}
+.card h1{font-size:20px;margin:0 0 4px;line-height:1.35}
+.card p{margin:4px 0 16px;color:var(--muted);font-size:13px;max-width:none}
+.card form{display:grid;gap:10px}
+.card .inp{flex:none;width:100%;padding:10px 12px;font-size:15px}
+.card .btn.primary{padding:11px 12px;font-size:15px}
+.card .msg{min-height:1.4em;font-size:13px;color:var(--danger)}
+.card .link{background:none;border:0;color:var(--accent);font-size:13px;cursor:pointer;padding:6px 0;text-align:left;text-decoration:underline}
+.card code{background:var(--accent-soft);padding:1px 6px;border-radius:4px;font-size:13px}
+.ubar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.ubar b{font-size:13px}
+.ubar .btn{padding:2px 8px;font-size:12px}
+.chks{display:flex;gap:6px 14px;flex-wrap:wrap}
+.chk{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--fg);cursor:pointer}
+.chk input{width:16px;height:16px;accent-color:var(--accent)}
+.adminp{margin:16px 0 8px;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.adminp h2{font-size:17px;margin:0 0 8px}
+.adminp h3{font-size:14px;margin:16px 0 6px}
+.sform{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sform .inp{flex:1 1 150px}
+.adminp .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.adminp .acts{display:flex;gap:6px;flex-wrap:wrap}
+tr.off td{opacity:.6}
+tr.subrow td{background:var(--accent-soft);padding:12px 16px}
+.adminp .tw{overflow-x:auto}
+label.btn{display:inline-block}
+
+</style>
+</head>
+<body>
+
+<div class="center" id="v-setup" hidden>
+  <div class="card">
+    <h1>초기 설정이 필요합니다</h1>
+    <p><code>firebase-config.js</code> 파일에 Firebase 설정값과 원장님 이메일을 붙여 넣은 뒤 다시 올려 주세요. README.md의 2단계를 따라 하면 됩니다.</p>
+  </div>
+</div>
+
+<div class="center" id="v-login" hidden>
+  <div class="card">
+    <h1>삼성자라다 직원 매뉴얼</h1>
+    <p>원장님이 만들어 준 이메일과 비밀번호로 로그인하세요.</p>
+    <form id="loginf" autocomplete="on">
+      <input class="inp" id="lemail" type="email" autocomplete="username" placeholder="이메일" required aria-label="이메일">
+      <input class="inp" id="lpw" type="password" autocomplete="current-password" placeholder="비밀번호" required aria-label="비밀번호">
+      <div class="msg" id="lmsg" role="alert"></div>
+      <button type="submit" class="btn primary">로그인</button>
+      <button type="button" class="link" id="lforgot">비밀번호를 잊었어요</button>
+    </form>
+  </div>
+</div>
+
+<div class="center" id="v-denied" hidden>
+  <div class="card">
+    <h1>접근 권한이 없습니다</h1>
+    <p>이 계정은 아직 등록되지 않았거나 접근이 중지되었습니다. 원장님께 문의하세요.</p>
+    <button type="button" class="btn" id="btnOut2">로그아웃</button>
+  </div>
+</div>
+
+<div id="v-app" hidden>
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand"><strong>삼성자라다 직원 매뉴얼</strong>
+      <span><i class="dot" id="dot"></i><span id="conn">연결 중…</span></span>
+      <span class="ubar"><b id="uname"></b><button type="button" class="btn" id="btnAdmin" hidden>관리</button><button type="button" class="btn" id="btnPw">비밀번호 변경</button><button type="button" class="btn" id="btnOut">로그아웃</button></span>
+    </div>
+    <div class="prog" id="prog" aria-live="polite"></div>
+  </div>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="직군별 보기"></nav>
+</header>
+
+<div class="wrap">
+  <section class="adminp" id="adminp" hidden aria-label="관리"></section>
+  <section class="ov" id="ov" aria-label="파트별 진행 현황"></section>
+  <main id="doc"><div class="empty"><b>불러오는 중입니다</b>잠시만 기다려 주세요.</div></main>
+  <div id="addsec" style="margin-top:24px"></div>
+</div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, runTransaction, writeBatch } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { firebaseConfig, ADMIN_EMAIL } from './firebase-config.js';
+
+const $ = s => document.querySelector(s);
+const ROLES = {common:'공통', admin:'원무', nurse:'간호', lab:'임상병리'};
+const JOBS = {'':'미지정', admin:'원무', nurse:'간호', lab:'임상병리'};
+const TABS = [['all','전체'],['mine','내 파트'],['admin','원무'],['nurse','간호'],['lab','임상병리'],['common','공통']];
+const STAT = [['draft','초안'],['writing','작성 중'],['review','검토 요청'],['done','완료']];
+const STATC = {draft:'var(--line)', writing:'var(--c-admin)', review:'#E0A100', done:'var(--ok)'};
+
+let app, auth, db, me = null;
+let base = {}, staff = {}, order = [];
+let editing = {}, conflict = {}, rendered = {}, settingsOpen = {};
+let tab = 'all', tabAuto = true, live = false, loadErr = null, armedTimer = null, adminOpen = false;
+let unsubSec = null, unsubStaff = null;
+
+const esc = t => String(t==null?'':t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt = t => esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\[원장 확인 필요\]/g,'<mark>[원장 확인 필요]</mark>');
+const pa = p => esc(JSON.stringify(p));
+const clone = o => JSON.parse(JSON.stringify(o));
+const iso = () => new Date().toISOString();
+function at(root, path){ let o = root; for (const k of path) o = o[k]; return o; }
+function parentOf(root, path){ return [at(root, path.slice(0,-1)), path[path.length-1]]; }
+function fmtAt(s){
+  if (!s) return '';
+  try { return new Date(s).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}); }
+  catch(e){ return String(s).slice(5,16).replace('T',' '); }
+}
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 4200);
+}
+const stLabel = k => (STAT.find(x => x[0]===k) || STAT[0])[1];
+const state = sid => editing[sid] ? editing[sid].draft : base[sid];
+const who = d => d && d.byName ? esc(d.byName) : '<span class="sub">초기 등록</span>';
+const activeStaff = () => Object.keys(staff).filter(u => staff[u].active !== false).sort((a,b) => (staff[a].name||'').localeCompare(staff[b].name||'','ko'));
+function ownerNames(d){
+  if (!d.owners || !d.owners.length) return '';
+  return d.owners.map(u => staff[u] ? staff[u].name + (staff[u].active===false?' (비활성)':'') : '(삭제된 직원)').join(', ');
+}
+const isOwner = d => !!(me && d.owners && d.owners.indexOf(me.uid) >= 0);
+const canEditSec = sid => !!(me && base[sid] && (me.isAdmin || isOwner(base[sid])));
+
+function parse(id, d){
+  let blocks = [];
+  try { blocks = JSON.parse(d.blocksJson || '[]'); } catch(e){}
+  return {id, title:d.title||'', role:d.role||'common', order:d.order||0, owners:Array.isArray(d.owners)?d.owners:[], status:d.status||'draft', rev:d.rev||0, by:d.by||null, byName:d.byName||'', at:d.at||null, blocks};
+}
+function recompute(){
+  order = Object.keys(base).sort((a,b) => ((base[a].order||0)-(base[b].order||0)) || (a<b?-1:1));
+}
+
+/* ---------- block rendering ---------- */
+function cell(sid, path, text, isEd){
+  if (isEd) return '<span class="ed" contenteditable="plaintext-only" spellcheck="false" data-s="'+esc(sid)+'" data-p="'+pa(path)+'">'+esc(text)+'</span>';
+  if (text === '') return '<span class="ph">(작성)</span>';
+  return fmt(text);
+}
+function B(act, sid, path, label, cls, title, extra){
+  return '<button type="button" class="btn '+(cls||'')+'" data-act="'+act+'" data-s="'+esc(sid)+'" data-p="'+pa(path)+'"'+(title?' title="'+title+'" aria-label="'+title+'"':'')+(extra||'')+'>'+label+'</button>';
+}
+function tools(sid, path, isEd){
+  if (!isEd) return '';
+  return '<div class="bt">'+B('up',sid,path,'↑','','위로')+B('down',sid,path,'↓','','아래로')+B('dup',sid,path,'복제','','복제')+B('del',sid,path,'삭제','danger','삭제')+'</div>';
+}
+const isForm = b => !!b.form || (b.head.length>=2 && b.head[0]==='항목' && b.head[1]==='내용');
+
+function blockHtml(sid, b, bi, isEd){
+  const P = (...a) => ['blocks',bi].concat(a);
+  const bp = P(); let h = '';
+  if (b.t==='h3') h = '<h3>'+cell(sid,P('text'),b.text,isEd)+'</h3>';
+  else if (b.t==='h4') h = '<h4>'+cell(sid,P('text'),b.text,isEd)+'</h4>';
+  else if (b.t==='p') h = '<p>'+cell(sid,P('text'),b.text,isEd)+'</p>';
+  else if (b.t==='list'){
+    const tag = b.ordered ? 'ol' : 'ul';
+    h = '<'+tag+(b.check?' class="check"':'')+'>' + b.items.map((it,i) =>
+      '<li>'+cell(sid,P('items',i),it,isEd)+(isEd?B('del',sid,P('items',i),'×','x','항목 삭제'):'')+'</li>').join('') + '</'+tag+'>';
+    if (isEd) h += B('add-item',sid,bp,'+ 항목 추가','add');
+  } else if (b.t==='table'){
+    const form = isForm(b);
+    h = '<div class="tw"><table'+(form?' class="form"':'')+' style="--cols:'+b.head.length+'"><thead><tr>' +
+      b.head.map((x,i) => '<th>'+(isEd ? '<div class="thc">'+cell(sid,P('head',i),x,true)+(b.head.length>1?B('del-col',sid,P('head',i),'×','x','열 삭제'):'')+'</div>' : cell(sid,P('head',i),x,false))+'</th>').join('') +
+      (isEd?'<th class="rm"></th>':'') + '</tr></thead><tbody>' +
+      b.rows.map((r,ri) => '<tr>'+r.map((c,ci) => '<td>'+cell(sid,P('rows',ri,ci),c,isEd)+'</td>').join('') +
+        (isEd?'<td class="rm">'+B('del',sid,P('rows',ri),'×','x','행 삭제')+'</td>':'') + '</tr>').join('') + '</tbody></table></div>';
+    if (isEd){
+      h += '<div class="ttools">'+B('add-row',sid,bp,'+ 행 추가','add')+B('add-col',sid,bp,'+ 열 추가','add');
+      if (form) h += B('new-form',sid,bp,'+ 양식 추가 (빈 양식 복사)','add strong')+B('del-form',sid,bp,'이 양식 삭제','danger');
+      else h += B('del',sid,bp,'표 삭제','danger');
+      h += '</div>';
+    }
+  }
+  return '<div class="blk">'+tools(sid,bp,isEd)+h+'</div>';
+}
+
+/* ---------- section rendering ---------- */
+function settingsHtml(sid){
+  const d = base[sid], role = d.role || 'common', ids = activeStaff();
+  const chks = ids.length ? ids.map(u => '<label class="chk"><input type="checkbox" data-ownchk="'+esc(sid)+'" data-uid="'+esc(u)+'"'+(d.owners.indexOf(u)>=0?' checked':'')+'> '+esc(staff[u].name)+(staff[u].job?' <span class="sub">'+JOBS[staff[u].job]+'</span>':'')+'</label>').join('') : '<span class="sub">먼저 위쪽 "관리"에서 직원 계정을 추가하세요.</span>';
+  return '<div class="setp">'+
+    '<label>파트 이름 <input class="inp" data-settitle="'+esc(sid)+'" value="'+esc(d.title)+'" aria-label="파트 이름"></label>'+
+    '<label>담당 직군 <select class="rsel" data-roleset="'+esc(sid)+'" aria-label="담당 직군">'+Object.keys(ROLES).map(k => '<option value="'+k+'"'+(k===role?' selected':'')+'>'+ROLES[k]+'</option>').join('')+'</select></label>'+
+    '<div class="own"><span>이 파트를 수정할 수 있는 직원 <span class="sub">(여러 명 가능 · 원장님은 항상 수정 가능)</span></span><div class="chks">'+chks+'</div></div></div>';
+}
+
+function sectionHtml(sid){
+  const s = state(sid); if (!s) return '';
+  const isEd = !!editing[sid], d = base[sid] || s, role = d.role || 'common';
+  const no = order.indexOf(sid)+1, mayEdit = canEditSec(sid);
+  const stOpts = STAT.filter(x => me.isAdmin || x[0]!=='done' || d.status==='done');
+  const stSel = '<select class="st" data-stset="'+esc(sid)+'" aria-label="작성 상태"'+((mayEdit && (me.isAdmin || d.status!=='done'))?'':' disabled')+'>'+stOpts.map(x => '<option value="'+x[0]+'"'+(x[0]===d.status?' selected':'')+'>'+x[1]+'</option>').join('')+'</select>';
+  let acts = '';
+  if (mayEdit) acts += isEd ? B('sec-save',sid,[],'저장','primary')+B('sec-cancel',sid,[],'취소') : B('sec-edit',sid,[],'이 파트 수정','primary');
+  if (me.isAdmin) acts += B('set-toggle',sid,[],'파트 설정','')+B('sec-up',sid,[],'↑','','파트를 위로')+B('sec-down',sid,[],'↓','','파트를 아래로')+B('sec-del',sid,[],'파트 삭제','danger');
+  const on = ownerNames(d);
+  const ownTxt = on ? '담당 <b>'+esc(on)+'</b>' : '담당 미지정';
+  let hint = '';
+  if (!mayEdit) hint = '<span>'+(d.owners.length ? '담당 직원만 수정할 수 있습니다' : '담당자가 지정되면 수정할 수 있습니다')+'</span>';
+  else if (!me.isAdmin && d.status==='done') hint = '<span>완료된 파트는 수정하면 "작성 중"으로 돌아갑니다</span>';
+  const meta = '<div class="sec-meta">'+stSel+'<span class="who">'+ownTxt+'</span><span>마지막 수정 '+who(d)+(d.at?' · '+esc(fmtAt(d.at)):'')+'</span>'+hint+'<span class="dchip" data-dchip="'+esc(sid)+'"'+(isEd && editing[sid].dirty?'':' hidden')+'>저장 전</span></div>';
+  let cf = '';
+  if (isEd && conflict[sid]){
+    const c = conflict[sid];
+    cf = '<div class="cf"><span>'+(c==='deleted'?'이 파트가 삭제되었습니다.':'다른 사람이 이 파트를 먼저 수정했습니다 ('+who(c)+' · '+esc(fmtAt(c.at))+').')+'</span>'+
+      (c==='deleted'?'':B('cf-force',sid,[],'내 수정으로 덮어쓰기','')+B('cf-take',sid,[],'최신 내용 보기 (내 수정 버림)',''))+'</div>';
+  }
+  const sp = (me.isAdmin && settingsOpen[sid]) ? settingsHtml(sid) : '';
+  const body = s.blocks.map((b,bi) => blockHtml(sid,b,bi,isEd)).join('');
+  const add = isEd ? '<div class="addbar"><span>이 파트에 추가</span>'+
+    ['h3|소제목','p|문단','list|목록','table|표'].map(x => { const a=x.split('|'); return '<button type="button" class="btn add" data-act="add-block" data-kind="'+a[0]+'" data-s="'+esc(sid)+'" data-p="[]">+ '+a[1]+'</button>'; }).join('')+'</div>' : '';
+  return '<section class="sec'+(isEd?' isEd':'')+'" id="sec-'+esc(sid)+'" data-role="'+esc(role)+'">'+
+    '<div class="sec-h"><h2><span class="no">'+no+'</span><span>'+esc(d.title)+'</span><span class="rchip">'+ROLES[role]+'</span></h2><div class="sec-acts">'+acts+'</div></div>'+meta+sp+cf+body+add+'</section>';
+}
+
+/* ---------- page rendering ---------- */
+const mine = () => order.filter(sid => isOwner(base[sid]));
+function inTab(sid, t){
+  if (t==='all') return true;
+  if (t==='mine') return isOwner(base[sid]);
+  return (base[sid].role||'common')===t;
+}
+const visible = () => order.filter(sid => inTab(sid, tab));
+
+function renderHeader(){
+  $('#dot').className = 'dot'+(live?' on':'');
+  $('#conn').textContent = loadErr ? '연결에 문제가 있습니다' : (live ? '실시간 연결됨 · 저장하면 모두에게 바로 보입니다' : '연결 중…');
+  $('#uname').textContent = me ? me.name + (me.isAdmin ? ' (관리자)' : '') : '';
+  $('#btnAdmin').hidden = !(me && me.isAdmin);
+  const total = order.length, c = {draft:0,writing:0,review:0,done:0};
+  order.forEach(sid => c[base[sid].status||'draft']++);
+  const seg = STAT.map(x => c[x[0]] ? '<i style="width:'+(c[x[0]]/Math.max(total,1)*100)+'%;background:'+STATC[x[0]]+'" title="'+x[1]+' '+c[x[0]]+'"></i>' : '').join('');
+  $('#prog').innerHTML = total ? '<span>완료 '+c.done+' / '+total+'개 파트'+(c.review?' · <b style="color:var(--warn-fg)">검토 요청 '+c.review+'</b>':'')+'</span><div class="pbar">'+seg+'</div>' : '';
+  const nm = mine().length;
+  $('#tabs').innerHTML = TABS.filter(t => t[0]!=='mine' || nm>0).map(t => {
+    const ids = order.filter(sid => inTab(sid, t[0]));
+    const rev = ids.filter(sid => base[sid].status==='review').length;
+    return '<button type="button" class="tab" role="tab" data-tab="'+t[0]+'" data-role="'+t[0]+'" aria-selected="'+(t[0]===tab)+'">'+t[1]+'<span class="cnt'+(rev?' hot':'')+'">'+(rev?'검토 '+rev:ids.length)+'</span></button>';
+  }).join('');
+}
+
+function renderOverview(){
+  const host = $('#ov');
+  if (tab!=='all' || !order.length){ host.innerHTML=''; return; }
+  host.innerHTML = '<h2>파트별 진행 현황</h2><div class="tw"><table style="--cols:5"><thead><tr><th>파트</th><th>직군</th><th>담당자</th><th>상태</th><th>마지막 수정</th></tr></thead><tbody>'+
+    order.map((sid,i) => {
+      const d = base[sid];
+      return '<tr data-go="'+esc(sid)+'" tabindex="0" data-role="'+esc(d.role)+'"><td><b>'+(i+1)+'.</b> '+esc(d.title)+'</td><td><span class="rchip">'+ROLES[d.role]+'</span></td><td class="sub">'+(ownerNames(d)?esc(ownerNames(d)):'미지정')+'</td><td><span class="pill '+esc(d.status)+'">'+stLabel(d.status)+'</span></td><td class="sub">'+who(d)+(d.at?' · '+esc(fmtAt(d.at)):'')+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+}
+
+function renderAddSec(){
+  $('#addsec').innerHTML = (me && me.isAdmin && live) ? '<button type="button" class="btn add" data-act="sec-add">+ 새 파트 추가</button>' : '';
+}
+
+function emptyMsg(){
+  if (loadErr){
+    const denied = loadErr.code === 'permission-denied';
+    return denied ? '<b>접근 권한이 없습니다</b>이 계정은 비활성화되었거나 등록되지 않았습니다. 원장님께 문의하세요.' : '<b>내용을 불러오지 못했습니다</b>새로고침해도 같으면 원장님께 알려 주세요.';
+  }
+  if (!live) return '<b>불러오는 중입니다</b>잠시만 기다려 주세요.';
+  if (tab==='mine') return '<b>지정된 내 파트가 없습니다</b>원장님이 담당 파트를 지정하면 여기에 나타납니다.';
+  if (order.length) return '<b>이 직군의 파트가 없습니다</b>';
+  return '<b>아직 등록된 파트가 없습니다</b>'+(me.isAdmin ? '위쪽 "관리"에서 매뉴얼 초안(JSON)을 불러오거나, 아래 "새 파트 추가"로 만드세요.' : '원장님이 파트를 등록하면 여기에 나타납니다.');
+}
+
+function renderList(force){
+  const host = $('#doc'), ids = visible(), sig = tab+'|'+ids.join(',');
+  if (!ids.length){
+    host.innerHTML = '<div class="empty">'+emptyMsg()+'</div>'; host.setAttribute('data-sig',''); rendered = {};
+    return;
+  }
+  const snapSig = sid => ownerNames(base[sid]);
+  if (force || host.getAttribute('data-sig')!==sig){
+    host.innerHTML = ids.map(sectionHtml).join(''); host.setAttribute('data-sig',sig);
+    rendered = {}; ids.forEach(sid => rendered[sid] = {d:base[sid], c:conflict[sid], e:canEditSec(sid), n:snapSig(sid)});
+    return;
+  }
+  ids.forEach(sid => {
+    const r = rendered[sid], el = document.getElementById('sec-'+sid);
+    if (!el) return;
+    const n = snapSig(sid);
+    if (!r || r.d!==base[sid] || r.c!==conflict[sid] || r.e!==canEditSec(sid) || r.n!==n){
+      if (editing[sid] && r && r.c===conflict[sid] && r.e===canEditSec(sid)){ r.d = base[sid]; r.n = n; return; }
+      rerenderSection(sid);
+    }
+  });
+}
+
+function rerenderSection(sid){
+  const el = document.getElementById('sec-'+sid); if (!el) return;
+  const tmp = document.createElement('div'); tmp.innerHTML = sectionHtml(sid);
+  const n = tmp.firstElementChild; if (!n) return;
+  el.replaceWith(n);
+  rendered[sid] = {d:base[sid], c:conflict[sid], e:canEditSec(sid), n:base[sid]?ownerNames(base[sid]):''};
+}
+
+function refresh(force){ renderHeader(); renderOverview(); renderList(force); renderAddSec(); renderAdminPanel(); }
+
+/* ---------- admin panel (staff accounts, backup) ---------- */
+function renderAdminPanel(){
+  const host = $('#adminp');
+  if (!(me && me.isAdmin && adminOpen)){ host.hidden = true; return; }
+  if (host.hidden){
+    host.hidden = false;
+    host.innerHTML =
+      '<h2>관리</h2>'+
+      '<h3>직원 계정 추가</h3>'+
+      '<form id="addstaff" class="sform" autocomplete="off">'+
+        '<input class="inp" id="sn" placeholder="이름" required aria-label="직원 이름">'+
+        '<input class="inp" id="se" type="email" placeholder="이메일(로그인 ID)" required aria-label="직원 이메일">'+
+        '<input class="inp" id="sp" type="text" placeholder="임시 비밀번호 (6자 이상)" minlength="6" required aria-label="임시 비밀번호">'+
+        '<select class="rsel" id="sj" aria-label="직군">'+Object.keys(JOBS).map(k => '<option value="'+k+'">'+JOBS[k]+'</option>').join('')+'</select>'+
+        '<button type="submit" class="btn primary">계정 만들기</button>'+
+      '</form>'+
+      '<p class="sub" style="margin:4px 0 12px">임시 비밀번호는 직원에게 따로 알려 주세요. 직원은 첫 로그인 후 "비밀번호 변경"으로 바꿀 수 있습니다.</p>'+
+      '<div id="stlist"></div>'+
+      '<h3>백업 · 불러오기</h3>'+
+      '<div class="row"><button type="button" class="btn" data-act="backup">매뉴얼 백업 내려받기 (JSON)</button>'+
+      '<label class="btn">매뉴얼 불러오기 (JSON)<input type="file" id="impf" accept=".json,application/json" hidden></label></div>'+
+      '<p class="sub">불러오기는 같은 번호의 파트가 이미 있으면 건너뛰고, 없는 파트만 추가합니다.</p>';
+  }
+  renderStaffList();
+}
+const stOpen = {};
+function renderStaffList(){
+  const host = $('#stlist'); if (!host) return;
+  const ids = Object.keys(staff).sort((a,b) => (staff[a].name||'').localeCompare(staff[b].name||'','ko'));
+  if (!ids.length){ host.innerHTML = '<p class="sub">아직 등록된 직원이 없습니다.</p>'; return; }
+  const cnt = u => order.filter(sid => base[sid].owners.indexOf(u)>=0).length;
+  const rows = ids.map(u => { const s = staff[u], off = s.active===false, U = esc(u);
+    let r = '<tr'+(off?' class="off"':'')+'><td>'+esc(s.name)+(off?' <span class="sub">(비활성)</span>':'')+'</td><td class="sub">'+esc(s.email)+'</td>'+
+      '<td><select class="rsel" data-jobset="'+U+'" aria-label="직군">'+Object.keys(JOBS).map(k => '<option value="'+k+'"'+(k===(s.job||'')?' selected':'')+'>'+JOBS[k]+'</option>').join('')+'</select></td>'+
+      '<td>'+cnt(u)+'개 <button type="button" class="btn" data-act="st-parts" data-uid="'+U+'">'+(stOpen[u]?'닫기':'파트 지정')+'</button></td>'+
+      '<td><div class="acts"><button type="button" class="btn" data-act="st-reset" data-uid="'+U+'">비밀번호 재설정 메일</button>'+
+      '<button type="button" class="btn'+(off?'':' danger')+'" data-act="st-toggle" data-uid="'+U+'">'+(off?'다시 활성화':'접근 중지')+'</button></div></td></tr>';
+    if (stOpen[u]){
+      const chks = order.length ? order.map(sid => '<label class="chk"><input type="checkbox" data-ownchk="'+esc(sid)+'" data-uid="'+U+'"'+(base[sid].owners.indexOf(u)>=0?' checked':'')+'> '+esc(base[sid].title)+' <span class="sub">'+ROLES[base[sid].role]+'</span></label>').join('') : '<span class="sub">등록된 파트가 없습니다.</span>';
+      r += '<tr class="subrow"><td colspan="5"><div class="own"><span><b>'+esc(s.name)+'</b> 님이 수정할 수 있는 파트를 체크하세요 <span class="sub">(체크하면 바로 저장됩니다)</span></span><div class="chks">'+chks+'</div>'+
+        (s.job ? '<div><button type="button" class="btn add" data-act="st-auto" data-uid="'+U+'">+ 직군('+JOBS[s.job]+')과 같은 파트 모두 지정</button></div>' : '<span class="sub">직군을 고르면 같은 직군의 파트를 한 번에 지정할 수 있습니다.</span>')+'</div></td></tr>';
+    }
+    return r;
+  }).join('');
+  host.innerHTML = '<div class="tw"><table style="--cols:5"><thead><tr><th>이름</th><th>이메일</th><th>직군</th><th>담당 파트</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+async function autoAssign(uid){
+  const s = staff[uid]; if (!s || !s.job) return;
+  const w = writeBatch(db); let n = 0;
+  order.forEach(sid => { const d = base[sid]; if (d.role===s.job && d.owners.indexOf(uid)<0){ w.update(doc(db,'sections',sid), {owners: d.owners.concat([uid])}); n++; } });
+  if (!n){ toast('지정할 파트가 없거나 이미 모두 지정되어 있습니다'); return; }
+  try { await w.commit(); toast(s.name+' 님에게 '+n+'개 파트를 지정했습니다'); } catch (err){ toast(failMsg(err)); }
+}
+async function setJob(uid, job){
+  try { await updateDoc(doc(db,'staff',uid), {job}); toast('직군을 저장했습니다'); } catch (err){ toast(failMsg(err)); }
+}
+
+/* ---------- editing ---------- */
+function markDirty(sid){
+  const ed = editing[sid]; if (!ed || ed.dirty) return;
+  ed.dirty = true;
+  const c = document.querySelector('[data-dchip="'+sid+'"]'); if (c) c.hidden = false;
+}
+function structural(sid, fn){ fn(editing[sid].draft); editing[sid].dirty = true; rerenderSection(sid); }
+function newBlock(kind){
+  if (kind==='h3') return {t:'h3',text:'새 소제목'};
+  if (kind==='p') return {t:'p',text:'내용을 입력하세요.'};
+  if (kind==='list') return {t:'list',items:['']};
+  return {t:'table',head:['항목','내용'],rows:[['','']]};
+}
+
+document.addEventListener('input', e => {
+  const el = e.target.closest && e.target.closest('.ed'); if (!el) return;
+  const sid = el.getAttribute('data-s'); if (!editing[sid]) return;
+  const pr = parentOf(editing[sid].draft, JSON.parse(el.getAttribute('data-p'))); pr[0][pr[1]] = el.textContent;
+  markDirty(sid);
+});
+document.addEventListener('keydown', e => {
+  if (e.key==='Enter' && e.target.closest && e.target.closest('.ed')) e.preventDefault();
+  if ((e.key==='Enter'||e.key===' ') && e.target.matches && e.target.matches('tr[data-go]')){ e.preventDefault(); goTo(e.target.getAttribute('data-go')); }
+});
+document.addEventListener('change', e => {
+  const t = e.target; if (!t.matches) return;
+  if (t.matches('[data-stset]')) setStatus(t.getAttribute('data-stset'), t.value);
+  else if (t.matches('[data-roleset]')) setBase(t.getAttribute('data-roleset'), {role: t.value});
+  else if (t.matches('[data-settitle]')){ const v = t.value.trim(); if (v) setBase(t.getAttribute('data-settitle'), {title: v}); }
+  else if (t.matches('[data-jobset]')) setJob(t.getAttribute('data-jobset'), t.value);
+  else if (t.matches('[data-ownchk]')) toggleOwner(t.getAttribute('data-ownchk'), t.getAttribute('data-uid'), t.checked);
+  else if (t.id==='impf' && t.files && t.files[0]) importFile(t.files[0], t);
+});
+
+function goTo(sid){
+  const d = base[sid]; if (!d) return;
+  if (!inTab(sid, tab)){ tab='all'; refresh(true); }
+  const el = document.getElementById('sec-'+sid);
+  if (el) el.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto':'smooth', block:'start'});
+}
+
+document.addEventListener('click', e => {
+  const tb = e.target.closest && e.target.closest('[data-tab]');
+  if (tb){ tab = tb.getAttribute('data-tab'); tabAuto = false; refresh(true); return; }
+  const go = e.target.closest && e.target.closest('tr[data-go]');
+  if (go){ goTo(go.getAttribute('data-go')); return; }
+  const b = e.target.closest && e.target.closest('[data-act]'); if (!b) return;
+  const act = b.getAttribute('data-act'), sid = b.getAttribute('data-s');
+  const path = b.getAttribute('data-p') ? JSON.parse(b.getAttribute('data-p')) : [];
+
+  const needsArm = (act==='del'||act==='del-col'||act==='del-form'||act==='sec-del'||(act==='st-toggle' && staff[b.getAttribute('data-uid')] && staff[b.getAttribute('data-uid')].active!==false)||(act==='sec-cancel' && editing[sid] && editing[sid].dirty));
+  if (needsArm && !b.classList.contains('armed')){
+    b.classList.add('armed'); b.setAttribute('data-label', b.textContent); b.textContent='확인';
+    clearTimeout(armedTimer);
+    armedTimer = setTimeout(() => { if (b.isConnected){ b.classList.remove('armed'); b.textContent=b.getAttribute('data-label'); } }, 3000);
+    return;
+  }
+
+  if (act==='sec-edit'){ const d=base[sid]; if(!d||!canEditSec(sid)) return; editing[sid] = {draft:clone(d), baseRev:d.rev||0, dirty:false}; delete conflict[sid]; rerenderSection(sid); return; }
+  if (act==='sec-cancel'){ delete editing[sid]; delete conflict[sid]; rerenderSection(sid); return; }
+  if (act==='sec-save'){ saveSection(sid, b); return; }
+  if (act==='cf-take'){ delete editing[sid]; delete conflict[sid]; rerenderSection(sid); return; }
+  if (act==='cf-force'){ editing[sid].force = true; delete conflict[sid]; saveSection(sid, b); return; }
+  if (act==='backup'){ if (me.isAdmin) backup(); return; }
+  if (act==='st-parts'){ const u=b.getAttribute('data-uid'); stOpen[u]=!stOpen[u]; renderStaffList(); return; }
+  if (act==='st-auto'){ if (me.isAdmin) autoAssign(b.getAttribute('data-uid')); return; }
+  if (act==='st-reset'){ if (me.isAdmin) resetMail(staff[b.getAttribute('data-uid')]); return; }
+  if (act==='st-toggle'){ if (me.isAdmin) toggleStaff(b.getAttribute('data-uid')); return; }
+  if (act==='sec-up' || act==='sec-down'){ if (me.isAdmin) moveSection(sid, act==='sec-up'?-1:1); return; }
+  if (act==='sec-del'){ if (me.isAdmin) deleteSection(sid); return; }
+  if (act==='sec-add'){ if (me.isAdmin) addSection(); return; }
+  if (act==='set-toggle'){ if (me.isAdmin){ settingsOpen[sid] = !settingsOpen[sid]; rerenderSection(sid); } return; }
+  if (!editing[sid]) return;
+
+  if (act==='del') structural(sid, r => { const pr=parentOf(r,path); pr[0].splice(pr[1],1); });
+  else if (act==='del-col') structural(sid, r => { const ci=path[path.length-1], t=at(r,path.slice(0,-2)); if (t.head.length<2) return; t.head.splice(ci,1); t.rows.forEach(row => row.splice(ci,1)); });
+  else if (act==='del-form') structural(sid, r => { const pr=parentOf(r,path), a=pr[0], i=pr[1]; a.splice(i,1); if (i>0 && a[i-1] && a[i-1].t==='h4') a.splice(i-1,1); });
+  else if (act==='up') structural(sid, r => { const pr=parentOf(r,path),a=pr[0],i=pr[1]; if(i>0){ const t=a[i-1]; a[i-1]=a[i]; a[i]=t; } });
+  else if (act==='down') structural(sid, r => { const pr=parentOf(r,path),a=pr[0],i=pr[1]; if(i<a.length-1){ const t=a[i+1]; a[i+1]=a[i]; a[i]=t; } });
+  else if (act==='dup') structural(sid, r => { const pr=parentOf(r,path), a=pr[0], i=pr[1]; a.splice(i+1,0,clone(a[i])); });
+  else if (act==='add-item') structural(sid, r => { at(r,path).items.push(''); });
+  else if (act==='add-row') structural(sid, r => { const t=at(r,path); t.rows.push(t.head.map(() => '')); });
+  else if (act==='add-col') structural(sid, r => { const t=at(r,path); t.head.push('새 열'); t.rows.forEach(row => row.push('')); });
+  else if (act==='new-form') structural(sid, r => { const pr=parentOf(r,path), a=pr[0], i=pr[1], blank=clone(a[i]); blank.form=true; blank.rows=blank.rows.map(row => row.map((c,ci) => ci===0?c:'')); a.splice(i+1,0,{t:'h4',text:'새 양식 (이름을 입력하세요)'},blank); });
+  else if (act==='add-block') structural(sid, r => { r.blocks.push(newBlock(b.getAttribute('data-kind'))); });
+});
+
+/* ---------- writes ---------- */
+function failMsg(err){
+  const c = err && err.code || '';
+  if (c.indexOf('permission-denied')>=0) return '권한이 없어 저장하지 못했습니다. 담당 파트가 맞는지 확인하세요.';
+  if (c.indexOf('unavailable')>=0 || c.indexOf('network')>=0) return '인터넷 연결을 확인한 뒤 다시 시도하세요.';
+  return '저장하지 못했습니다. 잠시 후 다시 시도하세요.';
+}
+async function saveSection(sid, btn){
+  const ed = editing[sid]; if (!ed) return;
+  if (btn){ btn.disabled = true; btn.textContent = '저장 중…'; }
+  ed.saving = true;
+  try {
+    const ref = doc(db,'sections',sid);
+    await runTransaction(db, async tx => {
+      const s = await tx.get(ref);
+      if (!s.exists()) throw {code:'x-deleted'};
+      const cur = s.data();
+      if (!ed.force && (cur.rev||0) !== ed.baseRev) throw {code:'x-conflict', cur:parse(sid,cur)};
+      let st = cur.status || 'draft';
+      if (st==='draft' || (st==='done' && !me.isAdmin)) st = 'writing';
+      tx.update(ref, {blocksJson: JSON.stringify(ed.draft.blocks), rev:(cur.rev||0)+1, by:me.uid, byName:me.name, at:iso(), status:st});
+    });
+    delete editing[sid]; delete conflict[sid];
+    toast('저장했습니다'); rerenderSection(sid);
+  } catch (err){
+    ed.saving = false;
+    if (err && err.code==='x-deleted'){ conflict[sid]='deleted'; rerenderSection(sid); }
+    else if (err && err.code==='x-conflict'){ conflict[sid]=err.cur; rerenderSection(sid); }
+    else { toast(failMsg(err)); if (btn){ btn.disabled=false; btn.textContent='저장'; } }
+  }
+}
+async function setStatus(sid, val){
+  try { await updateDoc(doc(db,'sections',sid), {status: val}); }
+  catch (err){ toast(failMsg(err)); rerenderSection(sid); }
+}
+async function setBase(sid, fields){
+  try { await updateDoc(doc(db,'sections',sid), fields); }
+  catch (err){ toast(failMsg(err)); rerenderSection(sid); }
+}
+async function toggleOwner(sid, uid, on){
+  const cur = base[sid] ? base[sid].owners.slice() : []; const i = cur.indexOf(uid);
+  if (on && i<0) cur.push(uid); else if (!on && i>=0) cur.splice(i,1); else return;
+  try { await updateDoc(doc(db,'sections',sid), {owners: cur}); toast('담당자를 저장했습니다'); }
+  catch (err){ toast(failMsg(err)); rerenderSection(sid); }
+}
+async function moveSection(sid, dir){
+  const i = order.indexOf(sid), j = i+dir; if (j<0 || j>=order.length) return;
+  const a = order[i], b2 = order[j]; let oa = base[a].order||0, ob = base[b2].order||0;
+  if (oa===ob) ob = oa + dir;
+  try { const w = writeBatch(db); w.update(doc(db,'sections',a),{order:ob}); w.update(doc(db,'sections',b2),{order:oa}); await w.commit(); }
+  catch (err){ toast(failMsg(err)); }
+}
+async function deleteSection(sid){
+  try { await deleteDoc(doc(db,'sections',sid)); delete editing[sid]; delete conflict[sid]; toast('파트를 삭제했습니다'); }
+  catch (err){ toast(failMsg(err)); }
+}
+async function addSection(){
+  const id = 's'+Date.now().toString(36);
+  let mx = 0; order.forEach(s => mx = Math.max(mx, base[s].order||0));
+  const role = (tab==='all' || tab==='mine') ? 'common' : tab;
+  try {
+    await setDoc(doc(db,'sections',id), {title:'새 파트', role, order:mx+1, owners:[], status:'draft', rev:1, by:me.uid, byName:me.name, at:iso(), blocksJson: JSON.stringify([{t:'p',text:'내용을 입력하세요.'}])});
+    settingsOpen[id] = true; toast('새 파트를 추가했습니다. "파트 설정"에서 이름과 담당자를 정하세요.');
+    setTimeout(() => goTo(id), 300);
+  } catch (err){ toast(failMsg(err)); }
+}
+
+/* ---------- admin tools ---------- */
+function backup(){
+  const out = {title:'삼성자라다 직원 매뉴얼', exported:iso(), sections: order.map(sid => { const d = base[sid]; return {id:sid, title:d.title, role:d.role, status:d.status, owners:d.owners.map(u => staff[u]?staff[u].email:u), blocks:d.blocks}; })};
+  const url = URL.createObjectURL(new Blob([JSON.stringify(out,null,1)], {type:'application/json'}));
+  const a = document.createElement('a'); a.href = url; a.download = '매뉴얼백업_'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+async function importFile(file, input){
+  try {
+    const data = JSON.parse(await file.text());
+    const list = Array.isArray(data) ? data : data.sections;
+    if (!Array.isArray(list) || !list.length) throw new Error('bad');
+    let mx = 0; order.forEach(s => mx = Math.max(mx, base[s].order||0));
+    const w = writeBatch(db); let n = 0, skip = 0;
+    list.forEach((s, i) => {
+      if (!s || !s.id || !Array.isArray(s.blocks)) return;
+      if (base[s.id]){ skip++; return; }
+      w.set(doc(db,'sections',String(s.id)), {title:s.title||'파트', role:ROLES[s.role]?s.role:'common', order:mx+i+1, owners:[], status:['draft','writing','review','done'].indexOf(s.status)>=0?s.status:'draft', rev:1, by:me.uid, byName:me.name, at:iso(), blocksJson:JSON.stringify(s.blocks)});
+      n++;
+    });
+    if (n) await w.commit();
+    toast(n+'개 파트를 불러왔습니다'+(skip?' ('+skip+'개는 이미 있어 건너뜀)':''));
+  } catch (err){ toast(err && err.code ? failMsg(err) : '파일을 읽지 못했습니다. 매뉴얼 JSON 파일이 맞는지 확인하세요.'); }
+  input.value = '';
+}
+let sec2 = null;
+async function createStaff(ev){
+  ev.preventDefault();
+  const name = $('#sn').value.trim(), email = $('#se').value.trim().toLowerCase(), pw = $('#sp').value, job = $('#sj').value;
+  const btn = ev.target.querySelector('button[type=submit]');
+  if (!name || !email || pw.length < 6) return;
+  btn.disabled = true; btn.textContent = '만드는 중…';
+  try {
+    if (!sec2) sec2 = initializeApp(firebaseConfig, 'creator');
+    const a2 = getAuth(sec2);
+    const cred = await createUserWithEmailAndPassword(a2, email, pw);
+    const uid = cred.user.uid;
+    await signOut(a2);
+    await setDoc(doc(db,'staff',uid), {name, email, job, active:true, createdAt:iso()});
+    ev.target.reset(); toast(name+' 님 계정을 만들었습니다. 이메일과 임시 비밀번호를 전달하세요.');
+  } catch (err){
+    const c = err && err.code || '';
+    toast(c==='auth/email-already-in-use' ? '이미 등록된 이메일입니다. 접근을 중지한 직원이면 목록에서 "다시 활성화"하세요.' :
+      c==='auth/invalid-email' ? '이메일 형식이 올바르지 않습니다.' :
+      c==='auth/weak-password' ? '비밀번호는 6자 이상이어야 합니다.' :
+      c==='auth/operation-not-allowed' ? 'Firebase에서 "이메일/비밀번호" 로그인이 켜져 있지 않습니다.' : failMsg(err));
+  }
+  btn.disabled = false; btn.textContent = '계정 만들기';
+}
+document.addEventListener('submit', e => { if (e.target.id==='addstaff') createStaff(e); });
+async function toggleStaff(uid){
+  const s = staff[uid]; if (!s) return;
+  try { await updateDoc(doc(db,'staff',uid), {active: s.active===false}); toast(s.active===false ? '다시 활성화했습니다' : '접근을 중지했습니다'); }
+  catch (err){ toast(failMsg(err)); }
+}
+async function resetMail(s){
+  if (!s) return;
+  try { await sendPasswordResetEmail(auth, s.email); toast(s.name+' 님에게 재설정 메일을 보냈습니다'); }
+  catch (err){ toast('메일을 보내지 못했습니다.'); }
+}
+
+/* ---------- live data ---------- */
+function detectConflicts(){
+  Object.keys(editing).forEach(sid => {
+    if (editing[sid].saving) return;
+    const cur = base[sid];
+    if (!cur) conflict[sid] = 'deleted';
+    else if ((cur.rev||0) !== editing[sid].baseRev) conflict[sid] = cur;
+  });
+}
+function stop(){
+  if (unsubSec){ unsubSec(); unsubSec = null; }
+  if (unsubStaff){ unsubStaff(); unsubStaff = null; }
+  base = {}; staff = {}; order = []; editing = {}; conflict = {}; rendered = {}; live = false; loadErr = null; adminOpen = false;
+}
+function subscribe(){
+  unsubSec = onSnapshot(collection(db,'sections'), snap => {
+    snap.docChanges().forEach(ch => { if (ch.type==='removed') delete base[ch.doc.id]; else base[ch.doc.id] = parse(ch.doc.id, ch.doc.data()); });
+    live = true; loadErr = null; recompute(); detectConflicts();
+    if (tabAuto && !me.isAdmin && mine().length){ tab = 'mine'; tabAuto = false; }
+    refresh(false);
+  }, err => { loadErr = err; live = false; refresh(false); });
+  unsubStaff = onSnapshot(collection(db,'staff'), snap => {
+    const m = {}; snap.forEach(d => m[d.id] = d.data()); staff = m;
+    refresh(false);
+  }, () => {});
+}
+
+/* ---------- auth ---------- */
+function show(view){
+  ['#v-setup','#v-login','#v-denied','#v-app'].forEach(s => { $(s).hidden = (s !== view); });
+}
+function authMsg(err){
+  const c = err && err.code || '';
+  if (c==='auth/invalid-credential' || c==='auth/wrong-password' || c==='auth/user-not-found' || c==='auth/invalid-email') return '이메일 또는 비밀번호가 맞지 않습니다.';
+  if (c==='auth/too-many-requests') return '시도가 너무 많습니다. 잠시 후 다시 해 주세요.';
+  if (c==='auth/network-request-failed') return '인터넷 연결을 확인해 주세요.';
+  if (c==='auth/user-disabled') return '사용이 중지된 계정입니다. 원장님께 문의하세요.';
+  return '로그인하지 못했습니다. 잠시 후 다시 해 주세요.';
+}
+$('#loginf').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type=submit]'), msg = $('#lmsg');
+  msg.textContent = ''; btn.disabled = true; btn.textContent = '로그인 중…';
+  try { await signInWithEmailAndPassword(auth, $('#lemail').value.trim(), $('#lpw').value); }
+  catch (err){ msg.textContent = authMsg(err); }
+  btn.disabled = false; btn.textContent = '로그인';
+});
+$('#lforgot').addEventListener('click', async () => {
+  const em = $('#lemail').value.trim(), msg = $('#lmsg');
+  if (!em){ msg.textContent = '위 칸에 이메일을 먼저 입력해 주세요.'; return; }
+  try { await sendPasswordResetEmail(auth, em); msg.textContent = '비밀번호 재설정 메일을 보냈습니다. 메일함(스팸함 포함)을 확인하세요.'; }
+  catch (err){ msg.textContent = '메일을 보내지 못했습니다. 이메일을 확인해 주세요.'; }
+});
+['#btnOut','#btnOut2'].forEach(s => $(s).addEventListener('click', () => signOut(auth)));
+$('#btnPw').addEventListener('click', async () => {
+  try { await sendPasswordResetEmail(auth, auth.currentUser.email); toast('비밀번호 변경 메일을 보냈습니다. 메일함을 확인하세요.'); }
+  catch (err){ toast('메일을 보내지 못했습니다.'); }
+});
+$('#btnAdmin').addEventListener('click', () => { adminOpen = !adminOpen; $('#adminp').hidden = true; refresh(false); if (adminOpen) $('#adminp').scrollIntoView({block:'start'}); });
+
+function boot(){
+  if (!firebaseConfig || !firebaseConfig.apiKey || /PASTE|여기에/.test(firebaseConfig.apiKey)){ show('#v-setup'); return; }
+  app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
+  onAuthStateChanged(auth, async u => {
+    stop(); me = null;
+    if (!u){ show('#v-login'); $('#lpw').value = ''; return; }
+    const email = (u.email||'').toLowerCase();
+    const isAdmin = email === String(ADMIN_EMAIL).trim().toLowerCase();
+    let name = '원장';
+    if (!isAdmin){
+      try {
+        const s = await getDoc(doc(db,'staff',u.uid));
+        if (!s.exists() || s.data().active === false){ show('#v-denied'); return; }
+        name = s.data().name || email;
+      } catch (err){ show('#v-denied'); return; }
+    }
+    me = {uid:u.uid, email, name, isAdmin};
+    tab = 'all'; tabAuto = true;
+    show('#v-app'); refresh(true); subscribe();
+  });
+}
+boot();
+
+</script>
+</body>
+</html>
